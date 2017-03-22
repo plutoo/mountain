@@ -6,6 +6,7 @@ import * as path from "path";
 import * as minimist from "minimist";
 import * as net from "net";
 import * as child_process from "child_process";
+import * as http from "http";
 
 import * as path_constants from "./path_consts";
 
@@ -53,6 +54,8 @@ export class StartupRunner {
                 await server.start_server();
             }
         }
+
+        this.monitor.start();
     }
 
 
@@ -85,7 +88,7 @@ class ServerInstance {
         console.log(`start argument ${argument_line.join(" ")}`)
         let c = child_process.fork(path_constants.appjs_path, argument_line,
             {
-               silent:true 
+               silent:true
             });
         c.on("error", (err)=>{
             console.error("master child_process error "+ err);
@@ -102,6 +105,7 @@ export class MonitorServer {
     config:MasterConfig;
     servers_config: {[index:string]:ServerConfig[]};
     sio_server:SocketIO.Server;
+    http_server:http.Server;
     socket_cache:Map<string, SocketIO.Socket>;
     server_cache:Map<string, ServerRealtimeInfo>;
 
@@ -112,16 +116,18 @@ export class MonitorServer {
     constructor(config:MasterConfig,  servers_config:{[index:string]:ServerConfig[]}){
         this.config = config;
         this.servers_config = servers_config;
-        this.sio_server = sio();
+        this.http_server = http.createServer();
+        this.sio_server = sio(this.http_server);
         this.server_cache = new Map;
         this.socket_cache = new Map;
         this.heartbeat_mark = new Map;
     }
 
     async start() {
-        let s = this.sio_server;
-        s.listen(this.config.host+":" + this.config.port,{});
+        this.http_server.listen(this.config.host+":" + this.config.port);
 
+        let s = this.sio_server;
+        
         s.on("connection", (sock)=>{
             this.socket_cache.set(sock.id, sock);
             var info = new ServerRealtimeInfo();

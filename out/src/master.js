@@ -11,6 +11,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const sio = require("socket.io");
 const sio_client = require("socket.io-client");
 const child_process = require("child_process");
+const http = require("http");
 const path_constants = require("./path_consts");
 const utils = require("./utils");
 var args = require("minimist")(process.argv.slice(2));
@@ -37,6 +38,7 @@ class StartupRunner {
                     yield server.start_server();
                 }
             }
+            this.monitor.start();
         });
     }
     get_env() {
@@ -79,15 +81,16 @@ class MonitorServer {
     constructor(config, servers_config) {
         this.config = config;
         this.servers_config = servers_config;
-        this.sio_server = sio();
+        this.http_server = http.createServer();
+        this.sio_server = sio(this.http_server);
         this.server_cache = new Map;
         this.socket_cache = new Map;
         this.heartbeat_mark = new Map;
     }
     start() {
         return __awaiter(this, void 0, void 0, function* () {
+            this.http_server.listen(this.config.host + ":" + this.config.port);
             let s = this.sio_server;
-            s.listen(this.config.host + ":" + this.config.port, {});
             s.on("connection", (sock) => {
                 this.socket_cache.set(sock.id, sock);
                 var info = new ServerRealtimeInfo();
