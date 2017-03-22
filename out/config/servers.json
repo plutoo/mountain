@@ -1,0 +1,12 @@
+{
+    "development":{
+        "gate":[
+            {
+                "server_name":"gate_server",
+                "ip":"127.0.0.1",
+                "pub_port":5010,
+                "pri_port":7010
+            }
+        ]
+    }
+}
