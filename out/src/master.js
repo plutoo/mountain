@@ -89,7 +89,7 @@ class MonitorServer {
     }
     start() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.http_server.listen(this.config.host + ":" + this.config.port);
+            this.http_server.listen(this.config.port, this.config.host, 200);
             let s = this.sio_server;
             s.on("connection", (sock) => {
                 this.socket_cache.set(sock.id, sock);
@@ -134,7 +134,9 @@ class MonitorServer {
         sock.emit("register_done");
         info.config = data;
         console.log("server startup success " + data.server_name);
-        this.server_startup_cb(data.server_name);
+        if (this.server_startup_cb) {
+            this.server_startup_cb(data.server_name);
+        }
     }
     on_heartbeat(sock, info, data) {
         sock.emit("heartbeat_back");

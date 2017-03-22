@@ -124,10 +124,10 @@ export class MonitorServer {
     }
 
     async start() {
-        this.http_server.listen(this.config.host+":" + this.config.port);
+        this.http_server.listen(this.config.port,this.config.host, 200);
 
         let s = this.sio_server;
-        
+
         s.on("connection", (sock)=>{
             this.socket_cache.set(sock.id, sock);
             var info = new ServerRealtimeInfo();
@@ -180,7 +180,9 @@ export class MonitorServer {
         sock.emit("register_done");
         info.config = data;
         console.log("server startup success "+data.server_name);
-        this.server_startup_cb(data.server_name);
+        if(this.server_startup_cb){
+            this.server_startup_cb(data.server_name);
+        }
     }
 
     private on_heartbeat(sock:SocketIO.Socket, info:ServerRealtimeInfo, data:{server_name:string}){
